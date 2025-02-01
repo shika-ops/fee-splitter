@@ -33,3 +33,35 @@
             total-stx))
     )
 )
+
+;; Helper function to transfer STX to a recipient
+(define-private (transfer-to-recipient 
+    (recipient (tuple (address principal) (share uint))) 
+    (remaining-stx uint))
+    (let (
+        (recipient-address (get address recipient))
+        (recipient-share (get share recipient))
+        (amount (/ (* remaining-stx recipient-share) u100))
+    )
+        (if (> amount u0)
+            (match (stx-transfer? amount tx-sender recipient-address)
+                success (- remaining-stx amount)
+                error remaining-stx)
+            remaining-stx)
+    )
+)
+
+
+
+;; Helper function to sum shares
+(define-private (sum-shares (recipient (tuple (address principal) (share uint))) (sum uint))
+    (+ sum (get share recipient))
+)
+
+;; Calculate the total share to ensure it equals 100.
+(define-read-only (calculate-total-share (recipient-list (list 10 (tuple (address principal) (share uint)))))
+    (fold sum-shares
+        recipient-list
+        u0
+    )
+)
